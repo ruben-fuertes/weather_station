@@ -3,9 +3,7 @@ import time
 import serial
 import os
 import sys
-import lockfile
 from datetime import date, datetime
-import daemon
 
 
 def readlineCR(port):
@@ -80,19 +78,5 @@ def test():
         i += 1
         time.sleep(1)
 
-#if __name__ == '__main__':
-#    main()
-#     test()
-
-with daemon.DaemonContext(
-                          chroot_directory=None,
-                          working_directory="/home/pi/",
-                          umask=0o000,
-                          #pidfile=lockfile.FileLock('/home/pi/receiver/receiver.pid'),
-                          pidfile=lockfile.FileLock('/var/run/receiver/receiver.pid'),
-                          #uid=,
-                          #gid=
-                          #stdout=sys.stdout,
-                          stderr=sys.stderr
-                          ):
+if __name__ == '__main__':
     main()
