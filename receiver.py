@@ -22,7 +22,8 @@ def formatInput(input):
     s = ",".join(input.rstrip("+RCV=").split(",")[2:][:-2])
     print(s)
     # out_file = os.path.abspath(os.path.dirname(__file__)) + "/raw_data/" + date.today().strftime("%Y_%m_%d") + ".csv"
-    out_file = "/home/pi/receiver/" + "/raw_data/" + date.today().strftime("%Y_%m_%d") + ".csv"
+    # out_file = "/home/pi/receiver/" + "/raw_data/" + date.today().strftime("%Y_%m_%d") + ".csv"
+    out_file = sys.argv[1] + "/raw_data/" + date.today().strftime("%Y_%m_%d") + ".csv"
     with open(out_file, "a+") as out:
         out.write(datetime.now().strftime("%Y/%m/%d_%H:%M:%S,") + s + '\n')
 
