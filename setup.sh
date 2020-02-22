@@ -24,6 +24,8 @@ WantedBy=multi-user.target" > receiver.service
 
 sudo cp receiver.service /lib/systemd/system/receiver.service
 
+sudo rm receiver.service
+
 sudo systemctl daemon-reload
 
 sudo systemctl enable receiver.service
