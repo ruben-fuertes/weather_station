@@ -1,0 +1,5 @@
+#ignore data folders for containers
+/services/
+/volumes/
+/backups/
+/raw_data/
