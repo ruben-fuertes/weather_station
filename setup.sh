@@ -1,33 +1,198 @@
 #!/bin/bash
 
-WD=$(pwd)
-
-GROUP=$(id -gn)
 
 
-mkdir -p raw_data
+# This function creates a service file that makes the file receiver.py run as a daemon
+create_service(){
+	WD=$(pwd)
 
-echo "[Unit]
-Description=Receiver Service
-After=multi-user.target
+	GROUP=$(id -gn)
 
-[Service]
-Type=simple
-User=${USER}
-Group="$GROUP"
-ExecStart=/usr/bin/python3 "$WD"/receiver.py "$WD"
-WorkingDirectory="$WD"
-StandardOutput=syslog
-StandardError=syslog
+	if [ ! -f /lib/systemd/system/receiver.service || $(grep -x -c "WorkingDirectory=$WD" /lib/systemd/system/receiver.service) -eq 0 ]
+	then
 
-[Install]
-WantedBy=multi-user.target" > receiver.service
+	echo "[Unit]
+	Description=Receiver Service
+	After=multi-user.target
 
-sudo cp receiver.service /lib/systemd/system/receiver.service
+	[Service]
+	Type=simple
+	User=$"USER"
+	Group="$GROUP"
+	ExecStart=/usr/bin/python3 "$WD"/receiver.py "$WD"
+	WorkingDirectory="$WD"
+	StandardOutput=syslog
+	StandardError=syslog
 
-sudo rm receiver.service
+	[Install]
+	WantedBy=multi-user.target" > receiver.service
 
-sudo systemctl daemon-reload
+	sudo cp receiver.service /lib/systemd/system/receiver.service
 
-sudo systemctl enable receiver.service
-sudo systemctl start receiver.service
+	sudo rm receiver.service
+
+	sudo systemctl daemon-reload
+
+	sudo systemctl enable receiver.service
+	sudo systemctl start receiver.service
+
+	else
+
+	echo "Service already running"
+
+	fi
+}
+
+
+# this function creates the volumes, services and backup directories
+docker_creaete_dirs() {
+	[ -d ./services ] || mkdir ./services
+	[ -d ./volumes ] || mkdir ./volumes
+	[ -d ./backups ] || mkdir ./backups
+
+}
+
+
+#function copies the template yml file to the local service folder and appends to the docker-compose.yml file
+yml_builder() {
+
+	service="services/$1/service.yml"
+
+	mkdir ./services/$1
+	echo "...pulled full $1 from template"
+	rsync -a -q .templates/$1/ services/$1/
+
+
+	#if an env file exists check for timezone
+	[ -f "./services/$1/$1.env" ] && timezones ./services/$1/$1.env
+
+	#add new line then append service
+	echo "" >>docker-compose.yml
+		cat $service >>docker-compose.yml
+
+	#make sure terminal.sh is executable
+	[ -f ./services/$1/terminal.sh ] && chmod +x ./services/$1/terminal.sh
+
+}
+
+
+
+# Creates the docker-compose.yml
+
+yml_writter() {
+
+	docker_create_dirs
+
+        #Cointainers that will be installed
+        declare -a containers=("mariadb")
+
+        touch docker-compose.yml
+        echo "version: '2'" >docker-compose.yml
+        echo "services:" >>docker-compose.yml
+
+        #first run service directory wont exist
+        [ -d ./services ] || mkdir services
+
+        #Run yml_builder of all selected containers
+        for container in "${containers[@]}"; do
+                echo "Adding $container container"
+                yml_builder "$container"
+        done
+
+}
+
+
+# This function check timezone and update env file
+timezones() {
+
+	env_file=$1
+	TZ=$(cat /etc/timezone)
+
+	#test for TZ=
+	[ $(grep -c "TZ=" $env_file) -ne 0 ] && sed -i "/TZ=/c\TZ=$TZ" $env_file
+
+}
+
+
+# Checks if there is updates for the project
+update_project() {
+
+	echo "checking for project update"
+	git fetch origin master
+
+	if [ $(git status | grep -c "Your branch is up to date") -eq 1 ]; then
+		#delete .outofdate if it exisist
+		[ -f .outofdate ] && rm .outofdate
+		echo "Project is up to date"
+
+	else
+		echo "An update is available for the project"
+		if [ ! -f .outofdate ]; then
+			whiptail --title "Project update" --msgbox "An update is available for the project\nYou will not be reminded again until you next update" 8 78
+			touch .outofdate
+		fi
+	fi
+
+
+}
+
+
+# Installs docker if it does not exist
+install_docker() {
+
+	if command_exists docker; then
+		echo "docker already installed"
+	else
+		echo "Install Docker"
+		curl -fsSL https://get.docker.com | sh
+		sudo usermod -aG docker $USER
+	fi
+
+	if command_exists docker-compose; then
+		echo "docker-compose already installed"
+	else
+		echo "Install docker-compose"
+		sudo apt install -y docker-compose
+	fi
+
+	if (whiptail --title "Restart Required" --yesno "It is recommended that you restart you device now. Select yes to do so now" 20 78); then
+		sudo reboot
+	fi
+
+}
+
+
+# Checks the architecture and exits if not suported
+
+check_architecture() {
+
+	sys_arch=$(uname -m)
+
+	if [ $(echo "$sys_arch" | grep -c "arm") ]; then
+		echo "Correct architecture"
+		echo "Starting setup..."
+
+	else
+		echo "Architecture not supported"
+		exit
+	fi
+
+}
+
+
+main() {
+
+	check_architecture
+
+	update_project
+
+	#mkdir -p raw_data
+
+	#create_service
+
+	#install_docker
+
+	#yml_writter
+}
+
+main
