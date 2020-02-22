@@ -3,3 +3,5 @@
 /volumes/
 /backups/
 /raw_data/
+.outofdate
+docker-compose.yml

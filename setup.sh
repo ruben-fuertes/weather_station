@@ -44,7 +44,7 @@ create_service(){
 
 
 # this function creates the volumes, services and backup directories
-docker_creaete_dirs() {
+docker_create_dirs() {
 	[ -d ./services ] || mkdir ./services
 	[ -d ./volumes ] || mkdir ./volumes
 	[ -d ./backups ] || mkdir ./backups
@@ -57,7 +57,7 @@ yml_builder() {
 
 	service="services/$1/service.yml"
 
-	mkdir ./services/$1
+	mkdir -p ./services/$1
 	echo "...pulled full $1 from template"
 	rsync -a -q .templates/$1/ services/$1/
 
@@ -97,6 +97,8 @@ yml_writter() {
                 echo "Adding $container container"
                 yml_builder "$container"
         done
+
+	echo "run 'docker-compose up -d' to start"
 
 }
 
@@ -202,7 +204,7 @@ main() {
 
 	install_docker
 
-	#yml_writter
+	yml_writter
 }
 
 main
