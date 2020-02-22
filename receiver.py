@@ -10,7 +10,7 @@ def readlineCR(port):
     '''Function used to join imput data from the Serial'''
     rv = b''
     while True:
-        ch = port.read()
+        ch = port.read(1)
         rv += ch
         if ch==b"" or ch==b'\n':
             time.sleep(.5)
@@ -55,7 +55,7 @@ def listen_serial(ser):
         received data and writes it into a file named as the current day.
         It takes the serial object as argument '''
     while True:
-        if ser.inWaiting() > 0:
+        if ser.in_waiting > 0:
             try:
                 rcv = readlineCR(ser).strip()
                 formatInput(rcv.decode('utf-8'))
