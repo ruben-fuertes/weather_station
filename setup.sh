@@ -1,14 +1,13 @@
 #!/bin/bash
 
 
-
 # This function creates a service file that makes the file receiver.py run as a daemon
 create_service(){
 	WD=$(pwd)
 
 	GROUP=$(id -gn)
 
-	if [ ! -f /lib/systemd/system/receiver.service || $(grep -x -c "WorkingDirectory=$WD" /lib/systemd/system/receiver.service) -eq 0 ]
+	if [ ! -f /lib/systemd/system/receiver.service ] || [ $(grep -x -c "WorkingDirectory=$WD" /lib/systemd/system/receiver.service) -eq 0 ]
 	then
 
 	echo "[Unit]
@@ -137,8 +136,15 @@ update_project() {
 }
 
 
+command_exists() {
+	command -v "$@" >/dev/null 2>&1
+}
+
+
 # Installs docker if it does not exist
 install_docker() {
+
+	inst=0
 
 	if command_exists docker; then
 		echo "docker already installed"
@@ -146,6 +152,7 @@ install_docker() {
 		echo "Install Docker"
 		curl -fsSL https://get.docker.com | sh
 		sudo usermod -aG docker $USER
+		inst=1
 	fi
 
 	if command_exists docker-compose; then
@@ -153,10 +160,13 @@ install_docker() {
 	else
 		echo "Install docker-compose"
 		sudo apt install -y docker-compose
+		inst=1
 	fi
 
-	if (whiptail --title "Restart Required" --yesno "It is recommended that you restart you device now. Select yes to do so now" 20 78); then
-		sudo reboot
+	if [ $inst -eq 1 ]; then
+		if (whiptail --title "Restart Required" --yesno "It is recommended that you restart you device now. Select yes to do so now" 20 78); then
+			sudo reboot
+		fi
 	fi
 
 }
@@ -184,13 +194,13 @@ main() {
 
 	check_architecture
 
-	update_project
+	#update_project
 
-	#mkdir -p raw_data
+	mkdir -p raw_data
 
-	#create_service
+	create_service
 
-	#install_docker
+	install_docker
 
 	#yml_writter
 }
