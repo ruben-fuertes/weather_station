@@ -192,15 +192,18 @@ check_architecture() {
 }
 
 
+# This function checks if necessary packages are installed and installs the ones that are not.
+
 install_python_requirements() {
 
-		packages=( "pandas" "numpy" "mysql" )
+	# Hash table containing package name and import
+	declare -A packages=( ["pandas"]="pandas" ["numpy"]="numpy" ["mysql-connector"]="mysql" )
 
 	echo "Checking python requirements"
 
-	for pack in "${packages[@]}"; do
+	for pack in "${!packages[@]}"; do
 
-		if [ $(python3 -c "import $pack" > /dev/null 2>&1; echo $?) -eq 1 ]
+		if [ $(python3 -c "import ${packages[$pack]}" > /dev/null 2>&1; echo $?) -eq 1 ]
 		then
 
 			echo "installing $pack"
