@@ -192,11 +192,37 @@ check_architecture() {
 }
 
 
+install_python_requirements() {
+
+		packages=( "pandas" "numpy" "mysql" )
+
+	echo "Checking python requirements"
+
+	for pack in "${packages[@]}"; do
+
+		if [ $(python3 -c "import $pack" > /dev/null 2>&1; echo $?) -eq 1 ]
+		then
+
+			echo "installing $pack"
+			pip3 install $pack
+
+		else
+
+			echo "Package $pack already installed"
+
+		fi
+	done
+
+}
+
+
 main() {
 
 	check_architecture
 
 	#update_project
+
+	install_python_requirements
 
 	mkdir -p raw_data
 
@@ -208,3 +234,5 @@ main() {
 }
 
 main
+
+#install_python_requirements
