@@ -18,7 +18,7 @@ def create_database(db = "weather_station"):
 	mycursor = mydb.cursor()
 
 	# Creates the database in case it does not exist
-	#mycursor.execute("DROP DATABASE IF EXISTS " + db) ##############
+	mycursor.execute("DROP DATABASE IF EXISTS " + db) ##############
 
 	mycursor.execute("SHOW DATABASES")
 
