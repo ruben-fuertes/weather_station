@@ -52,15 +52,19 @@ def create_database(db = "weather_station"):
 	for x in mycursor:
 		print(x)
 
+	# Populate D_TIME dimension using populate_time.sql
+	populate_time_file = open("populate_time.sql").read()
+	multi_sql(populate_time_file, mycursor, sep = '---')
 
-def multi_sql(query, cursor):
+def multi_sql(query, cursor, sep = ';'):
 	''' This function takes a string containing multiple SQL statements
 	and executes it with the cursor '''
 
-	for statement in query.split(';'):
+	for statement in query.split(sep):
 		if len(statement.strip()) > 0:
 			#print(statement)
-			cursor.execute(statement + ';')
+			cursor.execute(statement)
+
 
 
 create_database()
