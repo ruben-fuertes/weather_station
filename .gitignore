@@ -5,3 +5,5 @@
 /raw_data/
 .outofdate
 docker-compose.yml
+/scripts/tmp/last_tick.txt
+/scripts/test.csv
