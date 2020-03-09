@@ -7,3 +7,5 @@
 docker-compose.yml
 /scripts/tmp/last_tick.txt
 /scripts/test.csv
+/scripts/raw_data/
+/scripts/tmp/

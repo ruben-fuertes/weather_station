@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
 import pandas as pd
-import mysql.connector
+#import mysql.connector
 import sys
+import os
 from datetime import datetime
 from math import inf
+
+base_dir = "./raw_data/"
 
 def check_quality(line):
 	''' This function takes a line of the raw data and checks if it
@@ -41,9 +44,7 @@ def check_quality(line):
 	return True
 
 
-file = open(sys.argv[1])
-
-def separe_by_time(file, sec = 100):
+def separe_by_time(readfile, sec = 100):
 	''' This function takes a file and an interval of time in
 	seconds and returns a list broken by "sec" containing a list
 	with the records for that time. sec must be smaller than the
@@ -53,9 +54,10 @@ def separe_by_time(file, sec = 100):
 	fl = []
 	tl = []
 	el = []
+	appended = True
 	lasttime = 0
 
-	for line in file:
+	for line in readfile.split('\n'):
 		line = line.strip()
 		if check_quality(line):
 			time = line.strip().split(',')[0]
@@ -75,11 +77,61 @@ def separe_by_time(file, sec = 100):
 		fl.append(tl)
 	return fl, el
 
-separated, error = separe_by_time(file)
-for l in separated:
-	p = [x.split(',')[0].split('T')[1] for x in l]
-	#print(p)
-#print(separated[0])
+def file_processer(b_d):
+	'''This function takes the base directory and takes the oldest file in the unprocessed
+	directory and handles the data. It returns the valid data in a list of lists
+	with the data grouped by time.'''
+
+	up = b_d + "unprocessed/"
+	pr_v = b_d + "processed/valid/"
+	bk = b_d + "backup/"
+	pr_nv = b_d + "processed/not_valid/"
+
+	uplist = sorted(os.listdir(up))
+
+	# Returns 0 if there is no files in unprocessed
+	if not len(uplist):
+		return 0
+
+	filename = uplist[0]
+	filepath = up + filename
+	with open(filepath) as f:
+		readfile = f.read()
+
+	with open(bk + filename, 'a+') as f:
+		f.write(readfile)
+
+	os.remove(filepath)
+
+	# Adds the previous last group of data stored in tmp
+	if filename in os.listdir("tmp/"):
+		readfile = open("tmp/" + filename).read() + readfile
+		os.remove("tmp/" + filename)
+
+	val_l, noval_l = separe_by_time(readfile, sec=100)
+
+
+	if len(val_l):
+		with open(pr_v + filename, 'a+') as f:
+			for l in val_l:
+				for i in l:
+					f.write(i + '\n')
+
+		# Write the last group in tmp if processing current day
+		lastdate = datetime.fromisoformat(val_l[-1][-1].split(',')[0]).date()
+		today = datetime.now().date()
+		if lastdate == today:
+			with open("tmp/" + filename, 'w') as f:
+				for l in val_l.pop(-1):
+					f.write(l)
+
+	if len(noval_l):
+		with open(pr_nv + filename, 'a+') as f:
+			for l in noval_l:
+				f.write(l + '\n')
+
+
+	return val_l
 
 
 def soil_hum_transform(val):
@@ -136,29 +188,53 @@ def compute_rain(col, curr_time, n=0.1):
 def compute_average(l):
 	''' This function takes a list with data and the previous last tick and returns the
 	average/max for that time and the last nuber of rain ticks. Stores the last number of ticks
-	in a file to be read later by the ETL'''
+	in a file to be read later by the ETL. Returns a DF with the averages/calculations'''
 
 	df = pd.DataFrame([sub.split(",") for sub in l])
+	d = dict()
 
 	time = list(pd.to_datetime(df[0], format='%Y-%m-%dT%H:%M:%S'))
 	time = time[len(time)//2]
-	press = pd.to_numeric(df[1]).mean()
-	temp = (pd.to_numeric(df[2]).mean() + pd.to_numeric(df[3]).mean()) /2
-	hum = pd.to_numeric(df[4]).mean()
+	d["DATETIME"] = [time]
+	press = round(pd.to_numeric(df[1]).mean(), 2)
+	d["PRESS_Pa"] = [press]
+	temp = round((pd.to_numeric(df[2]).mean() + pd.to_numeric(df[3]).mean()) / 2, 2)
+	d["TEMP_C"] = [temp]
+	hum = round(pd.to_numeric(df[4]).mean(), 2)
+	d["HUMIDITY_PERC"] = [hum]
+	soil_hum_raw = round(pd.to_numeric(df[5]).mean(), 2)
+	d["HUMIDITY_SOIL_RAW"] = soil_hum_raw
 	soil_hum = soil_hum_transform(pd.to_numeric(df[5]).mean())
+	d["HUMIDITY_SOIL"] = [soil_hum]
 	rain, last_tick = compute_rain(df[6], datetime.fromisoformat(df[0].iloc[-1]))
 	if last_tick:
 		with open('tmp/last_tick.txt', 'w') as lt:
 			lt.write(str(df[0].iloc[-1]) + ',' + str(last_tick))
+	d["RAIN_SINCE_LAST_READING_MM"] = [rain]
 
-	return rain
+	out_df = pd.DataFrame(data=d)
+
+	return out_df
 
 
-print(compute_average(separated[0]))
+
+
+def compute(l):
+	'''Takes a list of valid grouped data and returns a dataframe with
+	the averages computed'''
+
+	i = True
+	for list in l:
+		if i:
+			avrg_df = compute_average(list)
+			i = False
+		avrg_df = pd.concat([avrg_df, compute_average(list)])
+
+	return avrg_df
 
 
 
-#def compute_
+print(compute(file_processer("./raw_data/")))
 
 #file = open(sys.argv[1])
 
