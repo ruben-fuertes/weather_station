@@ -9,3 +9,4 @@ docker-compose.yml
 /scripts/test.csv
 /scripts/raw_data/
 /scripts/tmp/
+/scripts/__pycache__

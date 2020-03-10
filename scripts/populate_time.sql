@@ -5,9 +5,11 @@ BEGIN
 	DECLARE curdate DATE;
 	SET curdate = startdate;
 	WHILE curdate < stopdate DO
-		INSERT INTO D_TIME (DATE, YEAR, MONTH, MONTH_NAME, MONTH_NOMBRE,
+		INSERT INTO D_TIME (TIME_KEY_ID, DATE, YEAR, MONTH, MONTH_NAME, MONTH_NOMBRE,
 				DAY, DAY_NAME, DAY_NOMBRE, WEEK, WEEKEND_FLAG)
 			VALUES (
+			-- CAST(CONCAT(CAST(YEAR(curdate) AS CHAR(4)), CAST(MONTH(curdate) AS CHAR(2)), CAST(DAY(curdate) AS CHAR(2))) AS int),
+			date_format(curdate, '%Y%m%d'),
 			curdate,
 			YEAR(curdate),
 			MONTH(curdate),
