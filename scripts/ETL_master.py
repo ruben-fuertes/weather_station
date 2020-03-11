@@ -1,18 +1,18 @@
-import ETL_manageFiles as mf
-import ETL_computeValues as cv
+import ETL_extract as extr
+import ETL_transform as tran
+import ETL_load as load
+import os
+import shutil
+
+source = "2020_02_23.csv"
+destination = "raw_data/unprocessed/" + source
+
+shutil.copyfile(source, destination)
 
 
-def populate_tables(df):
-        '''This function takes a df with the data to insert in the LIVE table
-        and loops through the values performing a ON DUPLICATE KEY UPDATE'''
+df = tran.compute(extr.file_processer("./raw_data/"))
+print(df)
+load.populate_live(df)
 
-        query = """INSERT INTO table (id, name, age) VALUES(%s, %s, %s)
-        ON DUPLICATE KEY UPDATE name=%s, age=%s"""
-        #engine.execute(query, (df.id[i], df.name[i], df.age[i], df.name[i], df$
+load.populate_hour()
 
-
-
-        return
-
-
-print(cv.compute(mf.file_processer("./raw_data/")))

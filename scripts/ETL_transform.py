@@ -63,6 +63,10 @@ def compute_average(l):
 	average/max for that time and the last nuber of rain ticks. Stores the last number of ticks
 	in a file to be read later by the ETL. Returns a DF with the averages/calculations'''
 
+	# If l = 0 means that there's not files to process
+	if l == 0:
+		return 0
+
 	df = pd.DataFrame([sub.split(",") for sub in l])
 	d = dict()
 
@@ -85,7 +89,7 @@ def compute_average(l):
 			lt.write(str(df[0].iloc[-1]) + ',' + str(last_tick))
 	d["RAIN_SINCE_LAST_READING_MM"] = [rain]
 
-	out_df = pd.DataFrame(data=d)
+	out_df = pd.DataFrame.from_dict(data=d)
 
 	return out_df
 
@@ -94,6 +98,10 @@ def compute(l):
 	'''Takes a list of valid grouped data and returns a dataframe with
 	the averages computed'''
 
+	# If l = 0 means that there's not files to process
+	if l == 0:
+		return 0
+
 	i = True
 	for list in l:
 		if i:
@@ -101,6 +109,7 @@ def compute(l):
 			i = False
 		avrg_df = pd.concat([avrg_df, compute_average(list)])
 
+	avrg_df = avrg_df.reset_index(drop=True)
 	return avrg_df
 
 
