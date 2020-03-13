@@ -187,3 +187,39 @@ def populate_hour():
 	mycursor.close()
 	mydb.close()
 
+
+def update_to_zero():
+	''' This funciton takes the F_LIVE table and puts all the UPDATE column
+	to 0'''
+
+	mydb = mysql.connector.connect(
+			host = "localhost",
+			user = "root",
+			passwd = "ROOT_ACCESS_PASSWORD",
+			database = "weather_station"
+			)
+	mycursor = mydb.cursor()
+
+
+	query = """ UPDATE F_LIVE
+			SET
+			  UPDATED = 0
+		"""
+
+
+
+	mycursor.execute(query)
+	mydb.commit()
+
+	mycursor.close()
+	mydb.close()
+
+
+def load(df):
+	'''This function complies all the functions in ETL_load'''
+
+	populate_live(df)
+
+	populate_hour()
+
+	update_to_zero()
