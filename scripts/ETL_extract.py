@@ -83,6 +83,7 @@ def file_processer(b_d):
 	pr_v = b_d + "processed/valid/"
 	bk = b_d + "backup/"
 	pr_nv = b_d + "processed/not_valid/"
+	tmp = b_d + "tmp/"
 
 	uplist = sorted(os.listdir(up))
 
@@ -101,9 +102,9 @@ def file_processer(b_d):
 	os.remove(filepath)
 
 	# Adds the previous last group of data stored in tmp
-	if filename in os.listdir("tmp/"):
-		readfile = open("tmp/" + filename).read() + readfile
-		os.remove("tmp/" + filename)
+	if filename in os.listdir(tmp):
+		readfile = open(tmp + filename).read() + readfile
+		os.remove(tmp + filename)
 
 	val_l, noval_l = separe_by_time(readfile, sec=100)
 
@@ -118,7 +119,7 @@ def file_processer(b_d):
 		lastdate = datetime.fromisoformat(val_l[-1][-1].split(',')[0]).date()
 		today = datetime.now().date()
 		if lastdate == today:
-			with open("tmp/" + filename, 'w') as f:
+			with open(tmp + filename, 'w') as f:
 				for l in val_l.pop(-1):
 					f.write(l)
 

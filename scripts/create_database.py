@@ -3,7 +3,9 @@
 import pandas as pd
 import mysql.connector
 import re
+from sys import argv
 
+wd = argv[1] + "/scripts"
 
 def create_database(db = "weather_station"):
 	''' This function connects to the mariadb database and checks
@@ -18,7 +20,7 @@ def create_database(db = "weather_station"):
 	mycursor = mydb.cursor()
 
 	# Creates the database in case it does not exist
-	mycursor.execute("DROP DATABASE IF EXISTS " + db) ##############
+	#mycursor.execute("DROP DATABASE IF EXISTS " + db) ##############
 
 	mycursor.execute("SHOW DATABASES")
 
@@ -43,18 +45,20 @@ def create_database(db = "weather_station"):
 
 	mycursor = mydb.cursor()
 
-	create_tables_query = open("create_tables.sql").read()
+	create_tables_query = open(wd + "/create_tables.sql").read()
 
 	multi_sql(create_tables_query, mycursor)
 
 	mycursor.execute("SHOW TABLES")
 
 	for x in mycursor:
-		print(x)
+		print(x[0] + " successfully created")
 
 	# Populate D_TIME dimension using populate_time.sql
-	populate_time_file = open("populate_time.sql").read()
+	print("Populating time dimension...")
+	populate_time_file = open(wd + "/populate_time.sql").read()
 	multi_sql(populate_time_file, mycursor, sep = '---')
+	print("Database created")
 
 def multi_sql(query, cursor, sep = ';'):
 	''' This function takes a string containing multiple SQL statements

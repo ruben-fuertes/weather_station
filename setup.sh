@@ -2,7 +2,10 @@
 
 
 # This function creates a service file that makes the file receiver.py run as a daemon
-create_service(){
+create_service_receiver(){
+
+	echo "Creating receiver service..."
+
 	WD=$(pwd)
 
 	GROUP=$(id -gn)
@@ -11,20 +14,20 @@ create_service(){
 	then
 
 	echo "[Unit]
-	Description=Receiver Service
-	After=multi-user.target
+Description=Receiver Service
+After=multi-user.target
 
-	[Service]
-	Type=simple
-	User="$USER"
-	Group="$GROUP"
-	ExecStart=/usr/bin/python3 "$WD"/receiver.py "$WD"
-	WorkingDirectory="$WD"
-	StandardOutput=syslog
-	StandardError=syslog
+[Service]
+Type=simple
+User="$USER"
+Group="$GROUP"
+ExecStart=/usr/bin/python3 "$WD"/receiver.py "$WD"
+WorkingDirectory="$WD"
+StandardOutput=syslog
+StandardError=syslog
 
-	[Install]
-	WantedBy=multi-user.target" > receiver.service
+[Install]
+WantedBy=multi-user.target" > receiver.service
 
 	sudo cp receiver.service /lib/systemd/system/receiver.service
 
@@ -35,13 +38,62 @@ create_service(){
 	sudo systemctl enable receiver.service
 	sudo systemctl start receiver.service
 
+	echo "Receiver service ready"
+
 	else
 
-	echo "Service already running"
+	echo "Receiver service already running"
 
 	fi
 }
 
+
+
+# This function creates a service file that makes ETL_marter.py run as a daemon
+create_service_ETL(){
+
+	echo "Creating ETL service..."
+
+        WD=$(pwd)
+
+        GROUP=$(id -gn)
+
+        if [ ! -f /lib/systemd/system/ETL.service ] || [ $(grep -x -c "WorkingDirectory=$WD" /lib/systemd/system/ETL.service) -eq 0 ] || [ 1 -eq 1 ]
+        then
+
+        echo "[Unit]
+Description=ETL service
+After=multi-user.target
+
+[Service]
+Type=simple
+User="$USER"
+Group="$GROUP"
+ExecStart=/usr/bin/python3 "$WD"/scripts/ETL_master.py "$WD/raw_data"
+WorkingDirectory="$WD"
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target" > ETL.service
+
+        sudo cp ETL.service /lib/systemd/system/ETL.service
+
+        sudo rm ETL.service
+
+        sudo systemctl daemon-reload
+
+        sudo systemctl enable ETL.service
+        sudo systemctl start ETL.service
+
+        echo "ETL service ready"
+
+        else
+
+        echo "ETL service already running"
+
+	fi
+}
 
 # this function creates the volumes, services and backup directories
 docker_create_dirs() {
@@ -98,7 +150,9 @@ yml_writter() {
                 yml_builder "$container"
         done
 
-	echo "run 'docker-compose up -d' to start"
+	echo "running 'docker-compose up -d'"
+
+	docker-compose up -d
 
 }
 
@@ -219,6 +273,17 @@ install_python_requirements() {
 }
 
 
+# This function executes the script that create the database
+# into docker containing MariaDB
+
+create_database() {
+
+	WD=$(pwd)
+
+	python3 "$WD"/scripts/create_database.py "$WD"
+
+}
+
 main() {
 
 	check_architecture
@@ -229,11 +294,15 @@ main() {
 
 	mkdir -p raw_data raw_data/processed raw_data/unprocessed raw_data/backup raw_data/processed/valid raw_data/processed/not_valid
 
-	create_service
+	create_service_receiver
 
 	install_docker
 
 	yml_writter
+
+	create_database
+
+	create_service_ETL
 }
 
 main
