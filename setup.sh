@@ -292,7 +292,7 @@ main() {
 
 	install_python_requirements
 
-	mkdir -p raw_data raw_data/processed raw_data/unprocessed raw_data/backup raw_data/processed/valid raw_data/processed/not_valid
+	mkdir -p raw_data raw_data/processed raw_data/unprocessed raw_data/backup raw_data/processed/valid raw_data/processed/not_valid raw_data/tmp
 
 	create_service_receiver
 

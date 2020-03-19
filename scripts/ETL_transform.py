@@ -21,7 +21,7 @@ def soil_hum_transform(val):
                         return breakpoints[key]
 
 
-def compute_rain(col, curr_time, n=0.1):
+def compute_rain(col, curr_time, b_d, n=0.1):
 	''' This function takes a column with the ticks of the rain gauge in
 	a column of a DataFrame, the last number of ticks in the previous measure
 	and the mm of rain in one tick and returns the ammount of rain in that lapse of time '''
@@ -29,7 +29,7 @@ def compute_rain(col, curr_time, n=0.1):
 	col = col.astype('int32')
 
 	try:
-		lt_file = open('tmp/last_tick.txt').read().split(',')
+		lt_file = open(b_d + 'tmp/last_tick.txt').read().split(',')
 		last_time =  datetime.fromisoformat(lt_file[0])
 		last_tick = int(lt_file[1])
 
@@ -58,7 +58,7 @@ def compute_rain(col, curr_time, n=0.1):
 
 
 
-def compute_average(l):
+def compute_average(l, b_d):
 	''' This function takes a list with data and the previous last tick and returns the
 	average/max for that time and the last nuber of rain ticks. Stores the last number of ticks
 	in a file to be read later by the ETL. Returns a DF with the averages/calculations'''
@@ -83,9 +83,9 @@ def compute_average(l):
 	d["HUMIDITY_SOIL_RAW"] = soil_hum_raw
 	soil_hum = soil_hum_transform(pd.to_numeric(df[5]).mean())
 	d["HUMIDITY_SOIL"] = [soil_hum]
-	rain, last_tick = compute_rain(df[6], datetime.fromisoformat(df[0].iloc[-1]))
+	rain, last_tick = compute_rain(df[6], datetime.fromisoformat(df[0].iloc[-1]), b_d)
 	if last_tick:
-		with open('tmp/last_tick.txt', 'w') as lt:
+		with open(b_d + 'tmp/last_tick.txt', 'w') as lt:
 			lt.write(str(df[0].iloc[-1]) + ',' + str(last_tick))
 	d["RAIN_SINCE_LAST_READING_MM"] = [rain]
 
@@ -94,7 +94,7 @@ def compute_average(l):
 	return out_df
 
 
-def compute(l):
+def compute(l, b_d):
 	'''Takes a list of valid grouped data and returns a dataframe with
 	the averages computed'''
 
@@ -105,9 +105,9 @@ def compute(l):
 	i = True
 	for list in l:
 		if i:
-			avrg_df = compute_average(list)
+			avrg_df = compute_average(list, b_d)
 			i = False
-		avrg_df = pd.concat([avrg_df, compute_average(list)])
+		avrg_df = pd.concat([avrg_df, compute_average(list, b_d)])
 
 	avrg_df = avrg_df.reset_index(drop=True)
 	return avrg_df
