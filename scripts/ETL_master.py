@@ -24,4 +24,4 @@ def run_ETL(min, wd):
 
 wd = argv[1]
 
-run_ETL(2, wd)
+run_ETL(15, wd)
