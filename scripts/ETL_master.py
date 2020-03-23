@@ -22,8 +22,6 @@ def run_ETL(min, wd):
 			pass
 		time.sleep(t)
 
-# wd = argv[1]
-
-wd = "/home/pi/weather_station/scripts/raw_data/"
+wd = argv[1]
 
 run_ETL(2, wd)
