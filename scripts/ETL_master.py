@@ -15,12 +15,11 @@ def run_ETL(min, wd):
 
 	while True:
 
-#		try:
-		df = tran.compute(extr.file_processer(wd), wd)
-		load.load(df)
-#		except:
-#			pass
-		break
+		try:
+			df = tran.compute(extr.file_processer(wd), wd)
+			load.load(df)
+		except:
+			pass
 		time.sleep(t)
 
 # wd = argv[1]
