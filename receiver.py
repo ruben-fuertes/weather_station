@@ -6,6 +6,29 @@ import sys
 from datetime import date, datetime
 
 
+class ReadLine:
+    def __init__(self, s):
+        self.buf = bytearray()
+        self.s = s
+
+    def readline(self):
+        i = self.buf.find(b"\n")
+        if i >= 0:
+            r = self.buf[:i+1]
+            self.buf = self.buf[i+1:]
+            return r
+        while True:
+            i = max(1, min(2048, self.s.in_waiting))
+            data = self.s.read(i)
+            i = data.find(b"\n")
+            if i >= 0:
+                r = self.buf + data[:i+1]
+                self.buf[0:] = data[i+1:]
+                return r
+            else:
+                self.buf.extend(data)
+
+
 def readlineCR(port):
     '''Function used to join imput data from the Serial'''
     rv = b''
@@ -51,21 +74,25 @@ def LoRa_setup():
     return ser
 
 def listen_serial(ser):
-    ''' Listen the serial port and waits for the data. It writes the raw
-        received data and writes it into a file named as the current day.
-        It takes the serial object as argument '''
-    while True:
-        if ser.in_waiting > 0:
-            try:
-                rcv = readlineCR(ser).strip()
-                formatInput(rcv.decode('utf-8'))
-            except(UnicodeDecodeError):
-                pass
-                print("UnicodeDecodeError")
-                print(rcv)
-            except(serial.serialutil.SerialException):
-                print("serial.serialutil.SerialException")
-                pass
+	''' Listen the serial port and waits for the data. It writes the raw
+	received data and writes it into a file named as the current day.
+	It takes the serial object as argument '''
+	while True:
+		if ser.in_waiting > 0:
+			try:
+				RL = ReadLine(ser)
+				rcv = RL.readline()
+				#rcv = readlineCR(ser).strip()
+				formatInput(rcv.decode('utf-8'))
+			except(UnicodeDecodeError):
+				pass
+				print("UnicodeDecodeError")
+				print(rcv)
+			except(serial.serialutil.SerialException):
+				print("serial.serialutil.SerialException")
+				pass
+		else:
+			time.sleep(2)
 
 def main():
     ''' Main function '''
